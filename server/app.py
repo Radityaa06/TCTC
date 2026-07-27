@@ -6,6 +6,7 @@ from typing import Dict, Any, List
 from fastapi import FastAPI, File, UploadFile, Form, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 import pandas as pd
 
 from form_inspector import inspect_target_form
@@ -213,6 +214,12 @@ async def get_status():
         "total_rows": state["total_rows"],
         "fields_count": len(state["fields"])
     }
+
+
+# Mount Static Production React Frontend if available
+FRONTEND_DIST = BASE_DIR.parent / "frontend" / "dist"
+if FRONTEND_DIST.exists():
+    app.mount("/", StaticFiles(directory=str(FRONTEND_DIST), html=True), name="static")
 
 
 if __name__ == "__main__":

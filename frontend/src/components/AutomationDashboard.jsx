@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { Play, Pause, RefreshCw, Sparkles, Terminal } from 'lucide-react';
 
+const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+  ? 'http://127.0.0.1:8000'
+  : window.location.origin;
+
 export default function AutomationDashboard({ datasetInfo }) {
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -17,13 +21,13 @@ export default function AutomationDashboard({ datasetInfo }) {
     setLogs((prev) => [...prev, '[START] Triggering Playwright batch automation & MCQ quiz solver...']);
 
     try {
-      await fetch('http://127.0.0.1:8000/api/start', {
+      await fetch(`${API_BASE}/api/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({})
       });
 
-      const eventSource = new EventSource('http://127.0.0.1:8000/api/stream');
+      const eventSource = new EventSource(`${API_BASE}/api/stream`);
       eventSource.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
@@ -45,7 +49,7 @@ export default function AutomationDashboard({ datasetInfo }) {
 
   const handlePause = async () => {
     try {
-      await fetch('http://127.0.0.1:8000/api/pause', { method: 'POST' });
+      await fetch(`${API_BASE}/api/pause`, { method: 'POST' });
       setIsPaused(true);
     } catch (err) {
       console.error('Pause error:', err);
@@ -54,7 +58,7 @@ export default function AutomationDashboard({ datasetInfo }) {
 
   const handleResume = async () => {
     try {
-      await fetch('http://127.0.0.1:8000/api/resume', { method: 'POST' });
+      await fetch(`${API_BASE}/api/resume`, { method: 'POST' });
       setIsPaused(false);
     } catch (err) {
       console.error('Resume error:', err);

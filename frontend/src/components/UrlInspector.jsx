@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { Globe, Search, Download, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 
+const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+  ? 'http://127.0.0.1:8000'
+  : window.location.origin;
+
 export default function UrlInspector({ onFieldsExtracted }) {
   const [url, setUrl] = useState('https://quiz.toitctc.com/');
   const [loading, setLoading] = useState(false);
@@ -12,7 +16,7 @@ export default function UrlInspector({ onFieldsExtracted }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/inspect', {
+      const res = await fetch(`${API_BASE}/api/inspect`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url })
@@ -31,7 +35,7 @@ export default function UrlInspector({ onFieldsExtracted }) {
   };
 
   const handleDownloadTemplate = () => {
-    window.location.href = 'http://127.0.0.1:8000/api/download-template';
+    window.location.href = `${API_BASE}/api/download-template`;
   };
 
   return (

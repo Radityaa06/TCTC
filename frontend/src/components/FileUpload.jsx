@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { UploadCloud, FileSpreadsheet, CheckCircle2, AlertTriangle } from 'lucide-react';
 
+const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+  ? 'http://127.0.0.1:8000'
+  : window.location.origin;
+
 export default function FileUpload({ onDatasetUploaded }) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -19,7 +23,7 @@ export default function FileUpload({ onDatasetUploaded }) {
     formData.append('file', selectedFile);
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/upload', {
+      const res = await fetch(`${API_BASE}/api/upload`, {
         method: 'POST',
         body: formData
       });
