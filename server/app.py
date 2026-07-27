@@ -38,7 +38,7 @@ state = {
     "is_paused": False,
     "progress": {"completed": 0, "failed": 0, "total": 0},
     "logs": [
-        {"log": "[SYSTEM] Universal Web Automation Dashboard Ready.", "metrics": {"completed": 0, "failed": 0, "total": 0}},
+        {"log": "[SYSTEM] Universal Web Automation Dashboard Online (v2.0 Async Engine).", "metrics": {"completed": 0, "failed": 0, "total": 0}},
         {"log": "[SYSTEM] Target Web App: https://quiz.toitctc.com/", "metrics": {"completed": 0, "failed": 0, "total": 0}},
         {"log": "[SYSTEM] Awaiting user trigger...", "metrics": {"completed": 0, "failed": 0, "total": 0}}
     ]
@@ -162,7 +162,7 @@ async def start_automation(background_tasks: BackgroundTasks):
     state["progress"]["failed"] = 0
     state["progress"]["total"] = state["total_rows"] or 250
     state["logs"] = [
-        {"log": "[START] Triggering Async Playwright batch automation & MCQ quiz solver...", "metrics": state["progress"]}
+        {"log": "[START v2.0] Triggering Native Async Playwright Engine...", "metrics": state["progress"]}
     ]
 
     background_tasks.add_task(
