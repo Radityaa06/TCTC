@@ -6,11 +6,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy frontend and install dependencies
-COPY frontend/package.json frontend/
-RUN cd frontend && npm install
+# Copy frontend package manifests and install all dependencies
+COPY frontend/package*.json frontend/
+RUN cd frontend && npm install --include=dev
 
-# Copy source code and build frontend static bundle
+# Copy source code and build production static bundle
 COPY . .
 RUN cd frontend && npm run build
 
