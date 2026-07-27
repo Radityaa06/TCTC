@@ -18,10 +18,14 @@ except Exception as err:
     print(f"Import error: {err}")
 
 
-def run_batch_sync(url: str, file_path: str, state: Dict[str, Any]):
+async def run_automation_task(url: str, file_path: str, state: Dict[str, Any]):
     """
-    Synchronous worker running on a dedicated thread with Pause / Resume & Headless Cloud support!
+    Fully Async Playwright Task Engine.
+    100% native asyncio — zero event-loop conflicts everywhere!
     """
+    state["is_running"] = True
+    state["is_paused"] = False
+
     def send_log(msg: str):
         print(f"[BOT] {msg}")
         log_entry = {
@@ -34,7 +38,7 @@ def run_batch_sync(url: str, file_path: str, state: Dict[str, Any]):
         }
         state["logs"].append(log_entry)
 
-    send_log(f"[INIT] Launching Playwright Chrome browser for {url} (Headless: {HEADLESS})...")
+    send_log(f"[INIT] Launching Async Playwright Chrome browser for {url} (Headless: {HEADLESS})...")
 
     if not file_path or not Path(file_path).exists():
         file_path = str(REG_BOT_DIR / "data" / "students.xlsx")
@@ -53,12 +57,12 @@ def run_batch_sync(url: str, file_path: str, state: Dict[str, Any]):
 
         if RegistrationBot:
             bot = RegistrationBot(url=url, headless=HEADLESS)
-            bot.start()
+            await bot.start()
 
             for idx, row in df.iterrows():
-                # Check for Pause state trigger
+                # Pause state check loop
                 while state.get("is_paused", False):
-                    time.sleep(0.5)
+                    await asyncio.sleep(0.5)
 
                 student = row.to_dict()
                 student["_row_index"] = idx + 1
@@ -67,7 +71,7 @@ def run_batch_sync(url: str, file_path: str, state: Dict[str, Any]):
 
                 send_log(f"[{idx+1}/{total}] Processing Candidate: {student_name} ({email})...")
 
-                success, msg = bot.process_student_registration(student, idx + 1, total)
+                success, msg = await bot.process_student_registration(student, idx + 1, total)
 
                 if success:
                     state["progress"]["completed"] += 1
@@ -76,9 +80,9 @@ def run_batch_sync(url: str, file_path: str, state: Dict[str, Any]):
                     state["progress"]["failed"] += 1
                     send_log(f"  ✗ Failed: {student_name} - {msg}")
 
-                time.sleep(0.5)
+                await asyncio.sleep(0.5)
 
-            bot.stop()
+            await bot.stop()
         else:
             send_log("[ERROR] RegistrationBot module failed to initialize.")
 
@@ -89,9 +93,3 @@ def run_batch_sync(url: str, file_path: str, state: Dict[str, Any]):
     finally:
         state["is_running"] = False
         state["is_paused"] = False
-
-
-async def run_automation_task(url: str, file_path: str, state: Dict[str, Any]):
-    state["is_running"] = True
-    state["is_paused"] = False
-    await asyncio.to_thread(run_batch_sync, url, file_path, state)

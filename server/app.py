@@ -154,7 +154,7 @@ async def start_automation(background_tasks: BackgroundTasks):
     if state["is_running"]:
         raise HTTPException(status_code=400, detail="Automation is already running.")
 
-    from automation_engine import run_batch_sync
+    from automation_engine import run_automation_task
 
     state["is_running"] = True
     state["is_paused"] = False
@@ -162,12 +162,11 @@ async def start_automation(background_tasks: BackgroundTasks):
     state["progress"]["failed"] = 0
     state["progress"]["total"] = state["total_rows"] or 250
     state["logs"] = [
-        {"log": "[START] Triggering Playwright batch automation & MCQ quiz solver...", "metrics": state["progress"]}
+        {"log": "[START] Triggering Async Playwright batch automation & MCQ quiz solver...", "metrics": state["progress"]}
     ]
 
-    # Offload sync Playwright execution to FastAPI background worker threadpool
     background_tasks.add_task(
-        run_batch_sync,
+        run_automation_task,
         state["current_url"],
         state["uploaded_file"],
         state
