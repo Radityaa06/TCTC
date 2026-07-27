@@ -1,0 +1,18 @@
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Node modules & build artifacts
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# Temporary data & caches
+server/__pycache__/
+server/temp/
+server/browser_data/
+server/logs/*.log
+server/screenshots/*.png
+.DS_Store
+*.pyc
