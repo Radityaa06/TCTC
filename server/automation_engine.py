@@ -11,14 +11,16 @@ if str(REG_BOT_DIR) not in sys.path:
 
 try:
     from registration_bot import RegistrationBot
+    from config import HEADLESS
 except Exception as err:
     RegistrationBot = None
+    HEADLESS = True
     print(f"Import error: {err}")
 
 
 def run_batch_sync(url: str, file_path: str, state: Dict[str, Any]):
     """
-    Synchronous worker running on a dedicated thread with Pause / Resume support!
+    Synchronous worker running on a dedicated thread with Pause / Resume & Headless Cloud support!
     """
     def send_log(msg: str):
         print(f"[BOT] {msg}")
@@ -32,7 +34,7 @@ def run_batch_sync(url: str, file_path: str, state: Dict[str, Any]):
         }
         state["logs"].append(log_entry)
 
-    send_log(f"[INIT] Launching Playwright Chrome browser for {url}...")
+    send_log(f"[INIT] Launching Playwright Chrome browser for {url} (Headless: {HEADLESS})...")
 
     if not file_path or not Path(file_path).exists():
         file_path = str(REG_BOT_DIR / "data" / "students.xlsx")
@@ -50,7 +52,7 @@ def run_batch_sync(url: str, file_path: str, state: Dict[str, Any]):
         send_log(f"[DATASET] Loaded {total} candidate records. Starting batch automation...")
 
         if RegistrationBot:
-            bot = RegistrationBot(url=url, headless=False)
+            bot = RegistrationBot(url=url, headless=HEADLESS)
             bot.start()
 
             for idx, row in df.iterrows():
