@@ -2,6 +2,8 @@ FROM mcr.microsoft.com/playwright/python:v1.45.0-jammy
 
 WORKDIR /app
 
+ENV PYTHONPATH=/app/server
+
 # Copy requirements and install python packages
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

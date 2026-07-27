@@ -1,7 +1,13 @@
+import sys
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+
 import os
 import json
 import asyncio
-from pathlib import Path
 from typing import Dict, Any, List
 from fastapi import FastAPI, File, UploadFile, Form, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,7 +18,6 @@ import pandas as pd
 from form_inspector import inspect_target_form
 from template_builder import generate_excel_template
 
-BASE_DIR = Path(__file__).resolve().parent
 TEMP_DIR = BASE_DIR / "temp"
 TEMP_DIR.mkdir(exist_ok=True)
 
