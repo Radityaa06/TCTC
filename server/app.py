@@ -1,13 +1,7 @@
-import sys
-from pathlib import Path
-
-BASE_DIR = Path(__file__).resolve().parent
-if str(BASE_DIR) not in sys.path:
-    sys.path.insert(0, str(BASE_DIR))
-
 import os
 import json
 import asyncio
+from pathlib import Path
 from typing import Dict, Any, List
 from fastapi import FastAPI, File, UploadFile, Form, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,6 +12,7 @@ import pandas as pd
 from form_inspector import inspect_target_form
 from template_builder import generate_excel_template
 
+BASE_DIR = Path(__file__).resolve().parent
 TEMP_DIR = BASE_DIR / "temp"
 TEMP_DIR.mkdir(exist_ok=True)
 
@@ -43,10 +38,11 @@ state = {
     "is_paused": False,
     "progress": {"completed": 0, "failed": 0, "total": 0},
     "logs": [
-        {"log": "[SYSTEM] Universal Web Automation Dashboard Online (v2.0 Async Engine).", "metrics": {"completed": 0, "failed": 0, "total": 0}},
+        {"log": "[SYSTEM] Universal Web Automation Dashboard Online (v2.0 Live Stream Engine).", "metrics": {"completed": 0, "failed": 0, "total": 0}},
         {"log": "[SYSTEM] Target Web App: https://quiz.toitctc.com/", "metrics": {"completed": 0, "failed": 0, "total": 0}},
         {"log": "[SYSTEM] Awaiting user trigger...", "metrics": {"completed": 0, "failed": 0, "total": 0}}
-    ]
+    ],
+    "live_screenshot": None
 }
 
 
@@ -140,15 +136,26 @@ async def upload_file(file: UploadFile = File(...)):
 
 @app.get("/api/stream")
 async def event_stream():
-    """SSE Real-time log & progress event stream for live dashboard updates."""
+    """SSE Real-time log & live browser video screenshot stream for live dashboard updates."""
     async def log_generator():
         last_index = 0
+        last_img = None
         while True:
             current_logs = state["logs"]
+            curr_img = state.get("live_screenshot")
+
+            payload = {}
             if last_index < len(current_logs):
-                for item in current_logs[last_index:]:
-                    yield f"data: {json.dumps(item)}\n\n"
+                payload["logs"] = current_logs[last_index:]
                 last_index = len(current_logs)
+
+            if curr_img and curr_img != last_img:
+                payload["live_screenshot"] = curr_img
+                last_img = curr_img
+
+            if payload:
+                yield f"data: {json.dumps(payload)}\n\n"
+
             await asyncio.sleep(0.3)
 
     return StreamingResponse(log_generator(), media_type="text/event-stream")
@@ -163,11 +170,12 @@ async def start_automation(background_tasks: BackgroundTasks):
 
     state["is_running"] = True
     state["is_paused"] = False
+    state["live_screenshot"] = None
     state["progress"]["completed"] = 0
     state["progress"]["failed"] = 0
     state["progress"]["total"] = state["total_rows"] or 250
     state["logs"] = [
-        {"log": "[START v2.0] Triggering Native Async Playwright Engine...", "metrics": state["progress"]}
+        {"log": "[START v2.0] Triggering Live Video Stream Playwright Engine...", "metrics": state["progress"]}
     ]
 
     background_tasks.add_task(
@@ -218,7 +226,8 @@ async def get_status():
         "is_paused": state["is_paused"],
         "progress": state["progress"],
         "total_rows": state["total_rows"],
-        "fields_count": len(state["fields"])
+        "fields_count": len(state["fields"]),
+        "live_screenshot": state.get("live_screenshot")
     }
 
 

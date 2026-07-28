@@ -1,14 +1,26 @@
 import time
 import asyncio
 import random
+import base64
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Tuple, List
 import pandas as pd
 from playwright.async_api import Page, BrowserContext
 from config import TARGET_URL, BROWSER_TIMEOUT_MS, MAX_RETRIES, RETRY_DELAY_SEC, SCREENSHOT_DIR, BASE_DIR
-from logger import logger, print_success, print_failure, print_warning
+from logger import logger, print_success, print_failure, print_warning, _global_state_ref
 from quiz_solver import QuizSolver
+
+
+async def send_live_screenshot(page: Page):
+    """Captures a lightweight base64 JPEG screenshot and streams it live to the web dashboard UI."""
+    try:
+        if page and _global_state_ref:
+            img_bytes = await page.screenshot(type="jpeg", quality=60)
+            b64_str = base64.b64encode(img_bytes).decode("utf-8")
+            _global_state_ref["live_screenshot"] = f"data:image/jpeg;base64,{b64_str}"
+    except Exception:
+        pass
 
 
 def get_flexible_value(student: Dict[str, Any], possible_keys: List[str]) -> str:
@@ -50,6 +62,7 @@ async def auto_click_cloudflare_turnstile(page: Page):
                 if await checkbox.is_visible(timeout=1500):
                     logger.info("Found Cloudflare Turnstile challenge checkbox! Auto-clicking...")
                     await checkbox.click()
+                    await send_live_screenshot(page)
                     await asyncio.sleep(2)
                     return True
     except Exception as e:
@@ -63,6 +76,7 @@ async def wait_for_cloudflare_and_form(page: Page, url: str, timeout_sec: int = 
     form_found = False
 
     while (time.time() - start_time) < timeout_sec:
+        await send_live_screenshot(page)
         curr_url = page.url.lower()
         logout_count = await page.locator("a:has-text('Logout')").count()
         if "my-account" in curr_url or logout_count > 0:
@@ -88,7 +102,6 @@ async def wait_for_cloudflare_and_form(page: Page, url: str, timeout_sec: int = 
             await asyncio.sleep(1)
 
     if not form_found:
-        # Fallback check if inputs exist
         if (await page.locator("input").count()) > 0:
             return
         raise Exception("Timed out waiting for Cloudflare verification or form to load.")
@@ -137,6 +150,7 @@ async def login_and_attempt_quiz(page: Page, student: Dict[str, Any], url: str) 
     try:
         login_url = "https://quiz.toitctc.com/login"
         await page.goto(login_url, wait_until="domcontentloaded")
+        await send_live_screenshot(page)
 
         await wait_for_cloudflare_and_form(page, url, timeout_sec=45)
 
@@ -150,12 +164,14 @@ async def login_and_attempt_quiz(page: Page, student: Dict[str, Any], url: str) 
         await human_type(page, uname_input, email_val)
         await asyncio.sleep(0.3)
         await human_type(page, psw_input, pass_val)
+        await send_live_screenshot(page)
         await asyncio.sleep(0.5)
 
         # Submit Login
         login_btn = page.locator("button[type='submit']:has-text('Login'), button:has-text('Login'), input[type='submit'][value*='Login']").first
         await login_btn.click()
         await page.wait_for_load_state("domcontentloaded")
+        await send_live_screenshot(page)
         await asyncio.sleep(2.5)
 
         # VERIFY LOGIN SUCCESS
@@ -192,6 +208,7 @@ async def process_student_registration(page: Page, student: Dict[str, Any], curr
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             await page.goto(url, wait_until="domcontentloaded")
+            await send_live_screenshot(page)
 
             await wait_for_cloudflare_and_form(page, url, timeout_sec=45)
 
@@ -212,14 +229,16 @@ async def process_student_registration(page: Page, student: Dict[str, Any], curr
 
             for field_key, (field_name, val) in field_mapping.items():
                 await fill_form_field(page, field_key, val, field_name)
-                await asyncio.sleep(random.uniform(0.1, 0.3))
+                await asyncio.sleep(random.uniform(0.1, 0.2))
 
-            await asyncio.sleep(random.uniform(0.4, 0.8))
+            await send_live_screenshot(page)
+            await asyncio.sleep(random.uniform(0.3, 0.6))
 
             submit_button = page.locator("button[type='submit'], input[type='submit'], button:has-text('Join Now'), button:has-text('Register')").first
             await submit_button.hover()
             await asyncio.sleep(random.uniform(0.1, 0.25))
             await submit_button.click()
+            await send_live_screenshot(page)
 
             success_locator = page.locator(".alert-success, #success-message, :text('Successful'), :text('Registration Completed'), :text('Begin Quiz Now'), a:has-text('Logout')").first
             error_alert_locator = page.locator(".alert-danger, #error-message, .error-msg, .woocommerce-error, :text('already registered'), :text('already exist')").first
@@ -237,6 +256,8 @@ async def process_student_registration(page: Page, student: Dict[str, Any], curr
                     failure_reason = (await error_alert_locator.inner_text()).strip()
                     break
                 await asyncio.sleep(0.3)
+
+            await send_live_screenshot(page)
 
             # BRANCH A: NEW REGISTRATION SUCCESS -> SOLVE QUIZ
             if success_found or "my-account" in page.url.lower() or "quizstart" in page.url.lower():
