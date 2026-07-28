@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Pause, RefreshCw, Sparkles, Terminal, Monitor, Square } from 'lucide-react';
+import { Play, Pause, RefreshCw, Sparkles, Terminal, Monitor, ExternalLink, Globe } from 'lucide-react';
 
 const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
   ? 'http://127.0.0.1:8000'
@@ -8,6 +8,7 @@ const API_BASE = window.location.origin.includes('localhost') || window.location
 export default function AutomationDashboard({ datasetInfo }) {
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [viewTab, setViewTab] = useState('stream'); // 'stream' or 'iframe'
   const [metrics, setMetrics] = useState({ completed: 0, failed: 0, total: datasetInfo?.total_rows || 250 });
   const [liveScreenshot, setLiveScreenshot] = useState(null);
   const [logs, setLogs] = useState([
@@ -16,10 +17,12 @@ export default function AutomationDashboard({ datasetInfo }) {
     '[SYSTEM] Awaiting user trigger...'
   ]);
 
+  const targetUrl = "https://quiz.toitctc.com/";
+
   const handleStart = async () => {
     setIsRunning(true);
     setIsPaused(false);
-    setLogs((prev) => [...prev, '[START v2.5] Triggering Stealth Playwright Engine...']);
+    setLogs((prev) => [...prev, '[START v2.5] Triggering Playwright Engine...']);
 
     try {
       await fetch(`${API_BASE}/api/start`, {
@@ -88,7 +91,7 @@ export default function AutomationDashboard({ datasetInfo }) {
           <span className="step-chip">04</span>
           <div>
             <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.3rem', fontWeight: '700' }}>
-              Live Automation Dashboard & Real-Time Browser Stream
+              Live Automation Dashboard & Real-Time Stream
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
               Real-time video preview of targeted site execution, pause/resume, and console log stream
@@ -96,19 +99,36 @@ export default function AutomationDashboard({ datasetInfo }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <a
+            href={targetUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-neon"
+            style={{
+              background: 'rgba(56, 189, 248, 0.12)',
+              border: '1px solid var(--border-cyan)',
+              color: 'var(--cyan-bright)',
+              padding: '12px 24px',
+              fontSize: '0.88rem'
+            }}
+          >
+            <ExternalLink size={18} />
+            Open Target Site ({targetUrl}) ↗
+          </a>
+
           {!isRunning ? (
-            <button className="btn-neon" onClick={handleStart} style={{ padding: '16px 36px' }}>
+            <button className="btn-neon" onClick={handleStart} style={{ padding: '14px 32px' }}>
               <Sparkles size={20} />
               Start Automation
             </button>
           ) : isPaused ? (
-            <button className="btn-neon" onClick={handleResume} style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 10px 30px rgba(16, 185, 129, 0.4)', padding: '16px 36px' }}>
+            <button className="btn-neon" onClick={handleResume} style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 10px 30px rgba(16, 185, 129, 0.4)', padding: '14px 32px' }}>
               <Play size={20} />
               Resume Automation
             </button>
           ) : (
-            <button className="btn-neon" onClick={handlePause} style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 10px 30px rgba(245, 158, 11, 0.4)', padding: '16px 36px' }}>
+            <button className="btn-neon" onClick={handlePause} style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 10px 30px rgba(245, 158, 11, 0.4)', padding: '14px 32px' }}>
               <Pause size={20} />
               Pause Automation
             </button>
@@ -147,18 +167,55 @@ export default function AutomationDashboard({ datasetInfo }) {
         </div>
       </div>
 
-      {/* LIVE BROWSER SCREEN PREVIEW WINDOW */}
+      {/* LIVE BROWSER PREVIEW & TARGET SITE VIEWER TABS */}
       <div style={{ margin: '28px 0' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.88rem', color: 'var(--text-secondary)', fontWeight: '700' }}>
-            <Monitor size={18} style={{ color: 'var(--cyan-bright)' }} />
-            <span>LIVE TARGET SITE BROWSER VIDEO STREAM</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => setViewTab('stream')}
+              style={{
+                padding: '8px 18px',
+                borderRadius: '10px',
+                border: '1px solid',
+                borderColor: viewTab === 'stream' ? 'var(--cyan-bright)' : 'rgba(255,255,255,0.1)',
+                background: viewTab === 'stream' ? 'rgba(56,189,248,0.15)' : 'rgba(15,23,42,0.6)',
+                color: viewTab === 'stream' ? 'var(--cyan-bright)' : 'var(--text-secondary)',
+                fontWeight: '700',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <Monitor size={16} /> Live Automation Stream
+            </button>
+
+            <button
+              onClick={() => setViewTab('iframe')}
+              style={{
+                padding: '8px 18px',
+                borderRadius: '10px',
+                border: '1px solid',
+                borderColor: viewTab === 'iframe' ? 'var(--cyan-bright)' : 'rgba(255,255,255,0.1)',
+                background: viewTab === 'iframe' ? 'rgba(56,189,248,0.15)' : 'rgba(15,23,42,0.6)',
+                color: viewTab === 'iframe' ? 'var(--cyan-bright)' : 'var(--text-secondary)',
+                fontWeight: '700',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <Globe size={16} /> Direct Target Site Frame
+            </button>
           </div>
 
-          {liveScreenshot && (
+          {liveScreenshot && viewTab === 'stream' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--emerald)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '4px 12px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '700' }}>
               <div className="pulse-dot" style={{ width: '8px', height: '8px' }}></div>
-              LIVE STREAM ACTIVE
+              LIVE BROWSER STREAM ACTIVE
             </div>
           )}
         </div>
@@ -167,26 +224,34 @@ export default function AutomationDashboard({ datasetInfo }) {
           background: '#03060c',
           border: '1px solid rgba(56, 189, 248, 0.3)',
           borderRadius: '18px',
-          padding: '16px',
-          minHeight: '300px',
+          padding: viewTab === 'iframe' ? '0' : '16px',
+          minHeight: '340px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           boxShadow: '0 0 30px rgba(6, 182, 212, 0.15)',
           overflow: 'hidden'
         }}>
-          {liveScreenshot ? (
-            <img
-              src={liveScreenshot}
-              alt="Live Target Web App Browser Stream"
-              style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)', objectFit: 'contain', maxHeight: '520px' }}
-            />
+          {viewTab === 'stream' ? (
+            liveScreenshot ? (
+              <img
+                src={liveScreenshot}
+                alt="Live Target Web App Browser Stream"
+                style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)', objectFit: 'contain', maxHeight: '520px' }}
+              />
+            ) : (
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '50px 20px' }}>
+                <Monitor size={48} style={{ opacity: 0.3, marginBottom: '12px', color: 'var(--cyan-bright)' }} />
+                <div style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-secondary)' }}>Awaiting Live Automation Video Stream</div>
+                <div style={{ fontSize: '0.8rem', marginTop: '4px' }}>Click 'Start Automation' to view real-time target website execution frame-by-frame</div>
+              </div>
+            )
           ) : (
-            <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px 20px' }}>
-              <Monitor size={48} style={{ opacity: 0.3, marginBottom: '12px', color: 'var(--cyan-bright)' }} />
-              <div style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-secondary)' }}>Awaiting Live Browser Video Stream</div>
-              <div style={{ fontSize: '0.8rem', marginTop: '4px' }}>Click 'Start Automation' to view real-time target website execution frame-by-frame</div>
-            </div>
+            <iframe
+              src={targetUrl}
+              title="Target Site Preview"
+              style={{ width: '100%', height: '520px', border: 'none', borderRadius: '18px' }}
+            />
           )}
         </div>
       </div>
