@@ -7,16 +7,6 @@ from config import QUIZ_ANSWER_STRATEGY, MIN_THINK_TIME_SEC, MAX_THINK_TIME_SEC,
 from logger import logger, print_success, print_failure, print_warning, _global_state_ref
 
 
-async def send_live_screenshot(page: Page):
-    """Captures a lightweight base64 JPEG screenshot and streams it live to the web dashboard UI."""
-    try:
-        if page and _global_state_ref:
-            img_bytes = await page.screenshot(type="jpeg", quality=60)
-            b64_str = base64.b64encode(img_bytes).decode("utf-8")
-            _global_state_ref["live_screenshot"] = f"data:image/jpeg;base64,{b64_str}"
-    except Exception:
-        pass
-
 
 class QuizSolver:
     """Automates dynamic MCQ quiz completion for a logged-in student (1 to 5 questions)."""
@@ -29,7 +19,6 @@ class QuizSolver:
         try:
             logger.info("Checking for 'Begin Quiz Now' button or direct quiz screen...")
             await asyncio.sleep(1.5)
-            await send_live_screenshot(self.page)
 
             start_btn = self.page.locator(
                 "a:has-text('Begin Quiz Now'), button:has-text('Begin Quiz Now'), a:has-text('Start Quiz'), button:has-text('Start Quiz'), a[href*='quizstart'], .start-quiz-btn"
@@ -41,7 +30,6 @@ class QuizSolver:
                 await asyncio.sleep(random.uniform(0.8, 1.5))
                 await start_btn.click()
                 await self.page.wait_for_load_state("domcontentloaded")
-                await send_live_screenshot(self.page)
                 await asyncio.sleep(1.5)
                 return True
             else:
@@ -77,7 +65,6 @@ class QuizSolver:
             except Exception:
                 await chosen_radio.evaluate("el => el.click()")
 
-            await send_live_screenshot(self.page)
             return True
 
         custom_options = self.page.locator(".quiz-option, .answer-option, label.option, ul.options li, div.option")
@@ -87,7 +74,6 @@ class QuizSolver:
             target_idx = random.randint(0, c_count - 1) if QUIZ_ANSWER_STRATEGY == "random" else 0
             await asyncio.sleep(random.uniform(MIN_THINK_TIME_SEC, MAX_THINK_TIME_SEC))
             await custom_options.nth(target_idx).click()
-            await send_live_screenshot(self.page)
             return True
 
         logger.warning("No radio buttons or MCQ option containers found for this question step.")
@@ -108,7 +94,6 @@ class QuizSolver:
             await asyncio.sleep(random.uniform(0.5, 1.2))
             await submit_btn.click()
             await self.page.wait_for_load_state("domcontentloaded")
-            await send_live_screenshot(self.page)
             await asyncio.sleep(1.2)
 
         finish_indicators = self.page.locator(
@@ -133,7 +118,6 @@ class QuizSolver:
 
             for q_idx in range(1, max_questions + 1):
                 logger.info(f"Processing Quiz Question #{q_idx}...")
-                await send_live_screenshot(self.page)
 
                 finish_check = self.page.locator(":text('Quiz Completed'), :text('Quiz Finished'), :text('Score'), .quiz-result, :text('Thank You')")
                 if (await finish_check.count()) > 0 and (await finish_check.first.is_visible()):
