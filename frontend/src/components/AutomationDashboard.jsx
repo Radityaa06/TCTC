@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Pause, RefreshCw, Sparkles, Terminal, Monitor } from 'lucide-react';
+import { Play, Pause, RefreshCw, Sparkles, Terminal, Monitor, Square } from 'lucide-react';
 
 const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
   ? 'http://127.0.0.1:8000'
@@ -19,7 +19,7 @@ export default function AutomationDashboard({ datasetInfo }) {
   const handleStart = async () => {
     setIsRunning(true);
     setIsPaused(false);
-    setLogs((prev) => [...prev, '[START v2.0] Triggering Live Video Stream Playwright Engine...']);
+    setLogs((prev) => [...prev, '[START v2.5] Triggering Stealth Playwright Engine...']);
 
     try {
       await fetch(`${API_BASE}/api/start`, {
@@ -91,7 +91,7 @@ export default function AutomationDashboard({ datasetInfo }) {
               Live Automation Dashboard & Real-Time Browser Stream
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              Live video preview of targeted site execution, pause/resume, and console stream
+              Real-time video preview of targeted site execution, pause/resume, and console log stream
             </p>
           </div>
         </div>
@@ -149,9 +149,18 @@ export default function AutomationDashboard({ datasetInfo }) {
 
       {/* LIVE BROWSER SCREEN PREVIEW WINDOW */}
       <div style={{ margin: '28px 0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '12px', fontWeight: '700' }}>
-          <Monitor size={18} style={{ color: 'var(--cyan-bright)' }} />
-          <span>LIVE TARGET SITE BROWSER VIDEO STREAM</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.88rem', color: 'var(--text-secondary)', fontWeight: '700' }}>
+            <Monitor size={18} style={{ color: 'var(--cyan-bright)' }} />
+            <span>LIVE TARGET SITE BROWSER VIDEO STREAM</span>
+          </div>
+
+          {liveScreenshot && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--emerald)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '4px 12px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '700' }}>
+              <div className="pulse-dot" style={{ width: '8px', height: '8px' }}></div>
+              LIVE STREAM ACTIVE
+            </div>
+          )}
         </div>
 
         <div style={{
@@ -159,7 +168,7 @@ export default function AutomationDashboard({ datasetInfo }) {
           border: '1px solid rgba(56, 189, 248, 0.3)',
           borderRadius: '18px',
           padding: '16px',
-          minHeight: '280px',
+          minHeight: '300px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -170,12 +179,12 @@ export default function AutomationDashboard({ datasetInfo }) {
             <img
               src={liveScreenshot}
               alt="Live Target Web App Browser Stream"
-              style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)', objectFit: 'contain', maxHeight: '480px' }}
+              style={{ width: '100%', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)', objectFit: 'contain', maxHeight: '520px' }}
             />
           ) : (
             <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px 20px' }}>
               <Monitor size={48} style={{ opacity: 0.3, marginBottom: '12px', color: 'var(--cyan-bright)' }} />
-              <div style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-secondary)' }}>Awaiting Live Browser Stream</div>
+              <div style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-secondary)' }}>Awaiting Live Browser Video Stream</div>
               <div style={{ fontSize: '0.8rem', marginTop: '4px' }}>Click 'Start Automation' to view real-time target website execution frame-by-frame</div>
             </div>
           )}

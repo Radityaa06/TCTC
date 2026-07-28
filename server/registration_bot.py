@@ -16,7 +16,7 @@ async def send_live_screenshot(page: Page):
     """Captures a lightweight base64 JPEG screenshot and streams it live to the web dashboard UI."""
     try:
         if page and _global_state_ref:
-            img_bytes = await page.screenshot(type="jpeg", quality=60)
+            img_bytes = await page.screenshot(type="jpeg", quality=65)
             b64_str = base64.b64encode(img_bytes).decode("utf-8")
             _global_state_ref["live_screenshot"] = f"data:image/jpeg;base64,{b64_str}"
     except Exception:
@@ -54,16 +54,16 @@ async def capture_error_screenshot(page: Page, student_name: str, row_index: int
 
 
 async def auto_click_cloudflare_turnstile(page: Page):
-    """Detects Cloudflare Turnstile iframe and clicks the verification checkbox automatically."""
+    """Detects Cloudflare Turnstile challenge iframe and clicks the verification checkbox automatically."""
     try:
         for frame in page.frames:
             if "challenges.cloudflare.com" in frame.url or "turnstile" in frame.url:
-                checkbox = frame.locator("input[type='checkbox'], #challenge-stage, .mark, span.mark").first
+                checkbox = frame.locator("input[type='checkbox'], #challenge-stage, .mark, span.mark, .cb-lb").first
                 if await checkbox.is_visible(timeout=1500):
                     logger.info("Found Cloudflare Turnstile challenge checkbox! Auto-clicking...")
-                    await checkbox.click()
+                    await checkbox.click(force=True)
                     await send_live_screenshot(page)
-                    await asyncio.sleep(2)
+                    await asyncio.sleep(1.5)
                     return True
     except Exception as e:
         logger.debug(f"Turnstile click notice: {e}")
@@ -74,6 +74,7 @@ async def wait_for_cloudflare_and_form(page: Page, url: str, timeout_sec: int = 
     """Monitors page until Cloudflare verification completes and form is visible."""
     start_time = time.time()
     form_found = False
+    reload_attempted = False
 
     while (time.time() - start_time) < timeout_sec:
         await send_live_screenshot(page)
@@ -92,7 +93,16 @@ async def wait_for_cloudflare_and_form(page: Page, url: str, timeout_sec: int = 
             break
 
         # Attempt Turnstile auto-click
-        await auto_click_cloudflare_turnstile(page)
+        clicked = await auto_click_cloudflare_turnstile(page)
+
+        # Smart reload fallback if stuck on Turnstile for > 12 seconds
+        elapsed = time.time() - start_time
+        if elapsed > 12 and not reload_attempted and ("just a moment" in title or form_count == 0):
+            logger.info("Cloudflare challenge bypass delay detected. Refreshing page with stealth context...")
+            reload_attempted = True
+            await page.reload(wait_until="domcontentloaded")
+            await asyncio.sleep(2)
+            continue
 
         content = (await page.content()).lower()
         if "just a moment" in title or "verifying you are human" in content or "cf-turnstile" in content:

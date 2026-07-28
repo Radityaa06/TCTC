@@ -23,8 +23,8 @@ except Exception as err:
 
 async def run_automation_task(url: str, file_path: str, state: Dict[str, Any]):
     """
-    Fully Async Playwright Task Engine.
-    Streams ALL internal Playwright logs live to the web UI console!
+    Fully Async Stealth Playwright Task Engine.
+    Passes Cloudflare Turnstile challenges smoothly in cloud containers!
     """
     state["is_running"] = True
     state["is_paused"] = False
@@ -43,7 +43,7 @@ async def run_automation_task(url: str, file_path: str, state: Dict[str, Any]):
         }
         state["logs"].append(log_entry)
 
-    send_log(f"[INIT] Launching Async Playwright Chrome browser for {url} (Headless: {HEADLESS})...")
+    send_log(f"[INIT] Launching Stealth Playwright Engine for {url} (Headless: {HEADLESS})...")
 
     if not file_path or not Path(file_path).exists():
         file_path = str(REG_BOT_DIR / "data" / "students.xlsx")
@@ -65,7 +65,10 @@ async def run_automation_task(url: str, file_path: str, state: Dict[str, Any]):
                 "--disable-blink-features=AutomationControlled",
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
-                "--disable-dev-shm-usage"
+                "--disable-dev-shm-usage",
+                "--disable-infobars",
+                "--window-size=1920,1080",
+                "--start-maximized"
             ]
 
             browser = await p.chromium.launch(
@@ -85,13 +88,22 @@ async def run_automation_task(url: str, file_path: str, state: Dict[str, Any]):
 
                 send_log(f"[{idx+1}/{total}] Processing Candidate: {student_name} ({email})...")
 
-                # Fresh isolated context per candidate student
+                # Fresh stealth browser context per candidate
                 context = await browser.new_context(
-                    viewport={"width": 1280, "height": 800},
-                    user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+                    viewport={"width": 1920, "height": 1080},
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+                    locale="en-US",
+                    timezone_id="America/New_York"
                 )
                 page = await context.new_page()
-                await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+
+                # Stealth Navigator Injection for Cloudflare Bypass
+                await page.add_init_script("""
+                    Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+                    Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+                    Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+                    window.chrome = { runtime: {} };
+                """)
 
                 try:
                     success, msg = await process_student_registration(page, student, idx + 1, total, url)
