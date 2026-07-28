@@ -5,6 +5,32 @@ from colorama import Fore, Style, init
 
 init(autoreset=True)
 
+# Reference to active state container for real-time web console streaming
+_global_state_ref = None
+
+def set_global_state_ref(state: dict):
+    global _global_state_ref
+    _global_state_ref = state
+
+
+class WebStreamHandler(logging.Handler):
+    """Custom Log Handler that streams all internal Playwright logger statements to the web UI console!"""
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            if _global_state_ref and "logs" in _global_state_ref:
+                log_entry = {
+                    "log": f"[{record.levelname}] {record.getMessage()}",
+                    "metrics": {
+                        "completed": _global_state_ref["progress"]["completed"],
+                        "failed": _global_state_ref["progress"]["failed"],
+                        "total": _global_state_ref["progress"]["total"]
+                    }
+                }
+                _global_state_ref["logs"].append(log_entry)
+        except Exception:
+            pass
+
 
 class ColoredFormatter(logging.Formatter):
     FORMATS = {
@@ -29,6 +55,9 @@ def setup_logger(log_file_path: Path = None) -> logging.Logger:
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(ColoredFormatter())
     logger.addHandler(console_handler)
+
+    web_handler = WebStreamHandler()
+    logger.addHandler(web_handler)
 
     if log_file_path:
         log_file_path.parent.mkdir(parents=True, exist_ok=True)

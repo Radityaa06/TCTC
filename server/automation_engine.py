@@ -13,19 +13,23 @@ if str(REG_BOT_DIR) not in sys.path:
 try:
     from registration_bot import process_student_registration
     from config import HEADLESS
+    from logger import set_global_state_ref
 except Exception as err:
     process_student_registration = None
     HEADLESS = True
+    set_global_state_ref = lambda s: None
     print(f"Import error: {err}")
 
 
 async def run_automation_task(url: str, file_path: str, state: Dict[str, Any]):
     """
-    Fully Async Playwright Task Engine using async with async_playwright() context manager.
-    100% native asyncio — zero event-loop conflicts everywhere!
+    Fully Async Playwright Task Engine.
+    Streams ALL internal Playwright logs live to the web UI console!
     """
     state["is_running"] = True
     state["is_paused"] = False
+
+    set_global_state_ref(state)
 
     def send_log(msg: str):
         print(f"[BOT] {msg}")
