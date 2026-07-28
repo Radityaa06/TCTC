@@ -27,11 +27,20 @@ async def main():
     if uploaded_files:
         # Get the most recently uploaded file
         latest_file = max(uploaded_files, key=os.path.getmtime)
-        print(f"[SYSTEM] Using recently uploaded dataset: {Path(latest_file).name}")
+        print(f"[SYSTEM] Auto-detected recently uploaded dataset: {Path(latest_file).name}")
         file_path = latest_file
     else:
-        file_path = str(BASE_DIR / "server" / "data" / "students.xlsx")
-        print(f"[SYSTEM] Using default dataset: data/students.xlsx")
+        print("\n[SYSTEM] No uploaded dataset found in server/temp.")
+        print("Please drag and drop your Excel (.xlsx) file into this terminal, or type the file path:")
+        user_input = input("Dataset File Path: ").strip()
+        # Remove quotes if they drag and drop
+        user_input = user_input.strip("'").strip('"')
+        
+        if os.path.exists(user_input):
+            file_path = user_input
+        else:
+            file_path = str(BASE_DIR / "server" / "data" / "students.xlsx")
+            print(f"\n[WARNING] File not found. Falling back to default dataset: data/students.xlsx")
 
     # Dummy state object for compatibility with run_automation_task
     state = {
