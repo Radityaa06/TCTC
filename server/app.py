@@ -42,6 +42,7 @@ state = {
         {"log": "[SYSTEM] Target Web App: https://quiz.toitctc.com/", "metrics": {"completed": 0, "failed": 0, "total": 0}},
         {"log": "[SYSTEM] Awaiting user trigger...", "metrics": {"completed": 0, "failed": 0, "total": 0}}
     ],
+    "live_screenshot": None
 }
 
 
@@ -138,14 +139,19 @@ async def event_stream():
     """SSE Real-time log & live browser video screenshot stream for live dashboard updates."""
     async def log_generator():
         last_index = 0
+        last_img = None
         while True:
             current_logs = state["logs"]
+            curr_img = state.get("live_screenshot")
 
             payload = {}
             if last_index < len(current_logs):
                 payload["logs"] = current_logs[last_index:]
                 last_index = len(current_logs)
 
+            if curr_img and curr_img != last_img:
+                payload["live_screenshot"] = curr_img
+                last_img = curr_img
 
             if payload:
                 yield f"data: {json.dumps(payload)}\n\n"
@@ -164,6 +170,7 @@ async def start_automation(background_tasks: BackgroundTasks):
 
     state["is_running"] = True
     state["is_paused"] = False
+    state["live_screenshot"] = None
     state["progress"]["completed"] = 0
     state["progress"]["failed"] = 0
     state["progress"]["total"] = state["total_rows"] or 250
@@ -220,6 +227,7 @@ async def get_status():
         "progress": state["progress"],
         "total_rows": state["total_rows"],
         "fields_count": len(state["fields"]),
+        "live_screenshot": state.get("live_screenshot")
     }
 
 
