@@ -41,6 +41,22 @@ async def capture_error_screenshot(page: Page, student_name: str, row_index: int
     return path
 
 
+async def auto_click_cloudflare_turnstile(page: Page):
+    """Detects Cloudflare Turnstile iframe and clicks the verification checkbox automatically."""
+    try:
+        for frame in page.frames:
+            if "challenges.cloudflare.com" in frame.url or "turnstile" in frame.url:
+                checkbox = frame.locator("input[type='checkbox'], #challenge-stage, .mark, span.mark").first
+                if await checkbox.is_visible(timeout=1500):
+                    logger.info("Found Cloudflare Turnstile challenge checkbox! Auto-clicking...")
+                    await checkbox.click()
+                    await asyncio.sleep(2)
+                    return True
+    except Exception as e:
+        logger.debug(f"Turnstile click notice: {e}")
+    return False
+
+
 async def wait_for_cloudflare_and_form(page: Page, url: str, timeout_sec: int = 45):
     """Monitors page until Cloudflare verification completes and form is visible."""
     start_time = time.time()
@@ -48,25 +64,33 @@ async def wait_for_cloudflare_and_form(page: Page, url: str, timeout_sec: int = 
 
     while (time.time() - start_time) < timeout_sec:
         curr_url = page.url.lower()
-        if "my-account" in curr_url or (await page.locator("a:has-text('Logout')").count()) > 0:
+        logout_count = await page.locator("a:has-text('Logout')").count()
+        if "my-account" in curr_url or logout_count > 0:
             await page.goto(url, wait_until="domcontentloaded")
             await asyncio.sleep(1)
             continue
 
-        if (await page.locator("form").count()) > 0:
+        form_count = await page.locator("input[name='student'], input[name='email'], form input").count()
+        title = (await page.title()).lower()
+
+        if form_count > 0 and "just a moment" not in title:
             form_found = True
             break
 
-        title = (await page.title()).lower()
-        content = (await page.content()).lower()
+        # Attempt Turnstile auto-click
+        await auto_click_cloudflare_turnstile(page)
 
-        if "just a moment" in title or "verifying you are human" in content:
+        content = (await page.content()).lower()
+        if "just a moment" in title or "verifying you are human" in content or "cf-turnstile" in content:
             logger.info("Cloudflare verification in progress... Waiting for page redirect...")
             await asyncio.sleep(2)
         else:
             await asyncio.sleep(1)
 
     if not form_found:
+        # Fallback check if inputs exist
+        if (await page.locator("input").count()) > 0:
+            return
         raise Exception("Timed out waiting for Cloudflare verification or form to load.")
 
 
