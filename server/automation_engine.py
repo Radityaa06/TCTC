@@ -6,6 +6,8 @@ import pandas as pd
 from playwright.async_api import async_playwright
 
 import sys
+from playwright_stealth import stealth_async
+
 REG_BOT_DIR = Path(__file__).resolve().parent
 if str(REG_BOT_DIR) not in sys.path:
     sys.path.append(str(REG_BOT_DIR))
@@ -98,6 +100,7 @@ async def run_automation_task(url: str, file_path: str, state: Dict[str, Any]):
                 page = await context.new_page()
 
                 # Stealth Navigator Injection for Cloudflare Bypass
+                await stealth_async(page)
                 await page.add_init_script("""
                     Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
                     Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
