@@ -15,9 +15,9 @@ EXCEL_FILE_PATH = DATA_DIR / "students.xlsx"
 FAILED_EXCEL_PATH = DATA_DIR / "failed_students.xlsx"
 PROGRESS_STATE_FILE = DATA_DIR / ".progress_state.json"
 
-# Auto-detect Cloud Linux (Render) vs Local Mac
+# Run in non-headless mode (using Xvfb on Linux for stealth)
 IS_CLOUD = sys.platform.startswith("linux") or os.environ.get("RENDER") is not None
-HEADLESS = True if IS_CLOUD else os.environ.get("HEADLESS", "false").lower() == "true"
+HEADLESS = False
 
 BROWSER_TIMEOUT_MS = 45000
 MAX_RETRIES = 3
