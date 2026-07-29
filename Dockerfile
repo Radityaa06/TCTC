@@ -8,11 +8,11 @@ ENV PYTHONPATH=/app/server
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install xvfb for UI rendering mode BEFORE copying code to cache it permanently
+RUN apt-get update && apt-get install -y xvfb && rm -rf /var/lib/apt/lists/*
+
 # Copy source code including pre-compiled static frontend bundle
 COPY . .
-
-# Install xvfb for UI rendering mode (Playwright image already has core fonts)
-RUN apt-get update && apt-get install -y xvfb && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 8000
 
