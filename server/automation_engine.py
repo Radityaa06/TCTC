@@ -92,10 +92,7 @@ async def run_automation_task(url: str, file_path: str, state: Dict[str, Any]):
 
                 # Fresh stealth browser context per candidate
                 context = await browser.new_context(
-                    viewport={"width": 1920, "height": 1080},
-                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-                    locale="en-US",
-                    timezone_id="America/New_York"
+                    viewport={"width": 1920, "height": 1080}
                 )
                 page = await context.new_page()
 

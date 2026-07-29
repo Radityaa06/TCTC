@@ -61,7 +61,9 @@ async def auto_click_cloudflare_turnstile(page: Page):
                 checkbox = frame.locator("input[type='checkbox'], #challenge-stage, .mark, span.mark, .cb-lb").first
                 if await checkbox.is_visible(timeout=1500):
                     logger.info("Found Cloudflare Turnstile challenge checkbox! Auto-clicking...")
-                    await checkbox.click(force=True)
+                    await checkbox.hover()
+                    await asyncio.sleep(0.2)
+                    await checkbox.click()
                     await send_live_screenshot(page)
                     await asyncio.sleep(1.5)
                     return True

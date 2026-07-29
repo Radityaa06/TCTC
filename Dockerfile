@@ -11,8 +11,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy source code including pre-compiled static frontend bundle
 COPY . .
 
-# Install xvfb if it's not present (just to be safe)
-RUN apt-get update && apt-get install -y xvfb && rm -rf /var/lib/apt/lists/*
+# Install xvfb and standard fonts to pass Turnstile font-fingerprinting in UI mode
+RUN apt-get update && apt-get install -y xvfb fonts-liberation fonts-ubuntu fonts-noto fonts-ipafont-gothic fonts-wqy-zenhei && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 8000
 
