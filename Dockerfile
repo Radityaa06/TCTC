@@ -19,4 +19,5 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["xvfb-run", "-a", "--server-args=-screen 0 1920x1080x24", "python3", "-m", "uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Use shell form to allow environment variable expansion for Render's dynamic $PORT
+CMD xvfb-run -a --server-args="-screen 0 1920x1080x24" python3 -m uvicorn server.app:app --host 0.0.0.0 --port ${PORT:-8000}
