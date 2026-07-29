@@ -1,17 +1,16 @@
-FROM mcr.microsoft.com/playwright/python:v1.45.0-jammy
+FROM python:3.10-slim
 
 WORKDIR /app
-
 ENV PYTHONPATH=/app/server
 
-# Copy requirements and install python packages
+# Install core python packages
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install xvfb for UI rendering mode BEFORE copying code to cache it permanently
-RUN apt-get update && apt-get install -y xvfb && rm -rf /var/lib/apt/lists/*
+# Install ONLY Chromium and its system dependencies (including xvfb) to save massive amounts of time and space
+RUN playwright install chromium --with-deps
 
-# Copy source code including pre-compiled static frontend bundle
+# Copy source code
 COPY . .
 
 EXPOSE 8000
