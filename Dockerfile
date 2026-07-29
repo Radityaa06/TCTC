@@ -1,13 +1,17 @@
-FROM python:3.10-slim
+FROM ubuntu:22.04
 
+ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 ENV PYTHONPATH=/app/server
 
+# Install Python, pip, and xvfb
+RUN apt-get update && apt-get install -y python3 python3-pip xvfb curl && rm -rf /var/lib/apt/lists/*
+
 # Install core python packages
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Install ONLY Chromium and its system dependencies (including xvfb) to save massive amounts of time and space
+# Install ONLY Chromium and its system dependencies
 RUN playwright install chromium --with-deps
 
 # Copy source code
